@@ -21,7 +21,7 @@ import qualified Data.Map as Map
   На самом деле этот тип интерпретирует префиксное дерево как конечный автомат,
   что удобно для исправления ошибок с помощью автомата Левенштейна.
  -}
-data Trie a = Trie { isFinal :: Bool, transitions :: Map a (Trie a)}
+data Trie a = Trie { isFinal :: Bool, transitions :: Map a (Trie a) }
 
 empty :: Trie a
 empty = Trie False Map.empty
@@ -31,7 +31,7 @@ empty = Trie False Map.empty
   Сложность: O(log(m) * n), n - длина вставляемого слова, m - арность префиксного дерева.
 -}
 insert :: Ord a => [a] -> Trie a -> Trie a
-insert [] dict = Trie True (transitions dict)
+insert [] dict                             = Trie True (transitions dict)
 insert (x:xs) (Trie isFinal' transitions') =
     case Map.lookup x transitions' of
       Nothing -> Trie isFinal' $ Map.insert x (insert xs empty) transitions'
