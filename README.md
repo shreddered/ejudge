@@ -46,10 +46,12 @@ __Актуально на осенний семестр 2021-2022 учебног
 #include <string>
 
 int main(int argc, char* argv[]) {
-    // This is an example code which converts
-    // line from stdin to lower case according to user locale
+    // This is an example code which converts line from
+    // stdin to lower case according to user locale
     std::ios_base::sync_with_stdio(false); // required for imbue() to work as intended
     std::locale loc{""}; // use user locale
+    // Populate std::wcin and std::wcout with locale (i. e. tell 'em
+    // how to deal with std::wstring)
     std::wcin.imbue(loc);
     std::wcout.imbue(loc);
     std::wstring s;
