@@ -25,7 +25,7 @@ restorePath arr i j weights
   | otherwise                        =
       i : (restorePath arr (i - 1) (j - weights ! i) weights)
 
-restoreWeightAndPath arr n capacity weights = (foldr (+) 0 weights', path)
+restoreWeightAndPath arr n capacity weights = (sum weights', path)
   where
     path = reverse (restorePath arr n capacity weights)
     weights' = map ((!) weights) path
@@ -54,6 +54,5 @@ processInput [] = []
 processInput xs = (intercalate " " (map show [weight, price])) : (map show path)
   where
     capacity = read (head xs)
-    splitLines = map words (tail xs)
-    items = map (\ [x, y] -> ((read x :: Int), (read y :: Int))) splitLines
+    items = map ((\ [x, y] -> (x, y) ) . map read . words) (tail xs)
     (weight, price, path) = knapsack items capacity
