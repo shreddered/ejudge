@@ -47,9 +47,9 @@ main = interact (unlines . execute . map parseCommand . filter (not . null) . li
 
 parseCommand :: String -> Command
 parseCommand s = let (command:args) = words s
-                     n = read args !! 0
-                     p = read args !! 1
-                     k = read args !! 0
+                     n = read (args !! 0)
+                     p = read (args !! 1)
+                     k = read (args !! 0)
                   in case command of
                        "set"    -> Set n p
                        "add"    -> Add k
