@@ -28,8 +28,9 @@ empty m hashes = let arr = array (0, m - 1) [(i, False) | i <- [0..m-1]]
                    in BloomFilter hashes arr
 
 insert :: a -> BloomFilter a -> BloomFilter a
-insert x (BloomFilter hashes arr) = let arr' = arr // [(i, True) | i <- (hashes <*> pure x)]
-                                     in BloomFilter hashes arr'
+insert x (BloomFilter hashes arr) =
+  let arr' = arr // [(i, True) | i <- (hashes <*> pure x)]
+   in BloomFilter hashes arr'
 
 search :: a -> BloomFilter a -> Bool
 search x (BloomFilter hashes arr) = all id [arr ! i | i <- (hashes <*> pure x)]
