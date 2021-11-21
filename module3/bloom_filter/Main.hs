@@ -5,6 +5,7 @@ import Control.Applicative
 import Data.Array.Unboxed (UArray, (//), (!), array, indices)
 import Data.Bits (shiftL)
 import Data.Bool (bool)
+import Data.Word
 
 import Text.Read (readMaybe)
 
@@ -39,7 +40,7 @@ insert x (BloomFilter hashes arr) =
 search :: a -> BloomFilter a -> Bool
 search x (BloomFilter hashes arr) = all id [arr ! i | i <- (hashes <*> pure x)]
 
-data Command = Set Int Double | Add UInt | Search UInt | Print | ErrorCommand
+data Command = Set Int Double | Add Word64 | Search Word64 | Print | ErrorCommand
 
 main :: IO ()
 main = interact (unlines . execute . map parseCommand . filter (not . null) . lines)
