@@ -1,8 +1,12 @@
 module Main where
 
+import Control.Applicative
+
 import Data.Array.Unboxed (UArray, (//), (!), array, indices)
 import Data.Bits (shiftL)
 import Data.Bool (bool)
+
+import Text.Read (readMaybe)
 
 -- list of prime numbers
 primes :: [Int]
@@ -35,5 +39,24 @@ insert x (BloomFilter hashes arr) =
 search :: a -> BloomFilter a -> Bool
 search x (BloomFilter hashes arr) = all id [arr ! i | i <- (hashes <*> pure x)]
 
+data Command = Set Int Double | Add UInt | Search UInt | Print | ErrorCommand
+
 main :: IO ()
-main = putStrLn "Hello world"
+main = interact (unlines . execute . map parseCommand . filter (not . null) . lines)
+
+parseCommand :: String -> Command
+parseCommand s = let (command:args) = words s
+                     n = read args !! 0
+                     p = read args !! 1
+                     k = read args !! 0
+                  in case command of
+                       "set"    -> Set n p
+                       "add"    -> Add k
+                       "search" -> Search k
+                       "print"  -> Print
+                       _        -> ErrorCommand
+
+-- TODO: implement logic
+execute :: [Command] -> [String]
+execute [] = []
+execute xs = undefined
