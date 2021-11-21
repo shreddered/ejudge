@@ -28,7 +28,7 @@ instance Show (BloomFilter a) where
   show (BloomFilter _ arr) = [bool '0' '1' (arr ! i) | i <- indices arr]
 
 empty :: Int -> [a -> Int] -> BloomFilter a
-empty m hashes = let arr = array (0, m - 1) [(i, False) | i <- [0..m-1]]
+empty m hashes = let arr = array (0, m - 1) [(i, False) | i <- [0..m - 1]]
                    in BloomFilter hashes arr
 
 insert :: a -> BloomFilter a -> BloomFilter a
