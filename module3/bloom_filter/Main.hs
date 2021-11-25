@@ -50,13 +50,14 @@ search x (BloomFilter hashes arr) = all id [arr ! i | i <- (hashes <*> pure x)]
 data Command = Set Int Double | Add Word64 | Search Word64 | Print | ErrorCommand
 
 main :: IO ()
-main = interact (unlines . execute . map parseCommand . filter (not . null) . lines)
+main = interact (unlines . execute . map toCommand . filter (not . null) . lines)
 
-parseCommand :: String -> Command
-parseCommand s = let (command:args) = words s
-                     n = read (args !! 0)
-                     p = read (args !! 1)
-                     k = read (args !! 0)
+-- parse command from string
+toCommand :: String -> Command
+toCommand s = let (command:args) = words s
+                  n = read (args !! 0)
+                  p = read (args !! 1)
+                  k = read (args !! 0)
                   in case command of
                        "set"    -> Set n p
                        "add"    -> Add k
