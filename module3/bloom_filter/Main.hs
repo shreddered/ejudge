@@ -28,18 +28,25 @@ data BloomFilter a = BloomFilter [a -> Int] (UArray Int Bool)
 instance Show (BloomFilter a) where
   show (BloomFilter _ arr) = [bool '0' '1' (arr ! i) | i <- indices arr]
 
-bloomFilter :: Int -> [a -> Int] -> BloomFilter a
+-- create Bloom filter
+bloomFilter :: Int                       -- size of bit vector
+            -> [a -> Int]                -- hash functions
+            -> BloomFilter a
 bloomFilter m hashes = let arr = array (0, m - 1) [(i, False) | i <- [0..m - 1]]
                         in BloomFilter hashes arr
 
+-- insert element in a Bloom filter
 insert :: a -> BloomFilter a -> BloomFilter a
 insert x (BloomFilter hashes arr) =
   let arr' = arr // [(i, True) | i <- (hashes <*> pure x)]
    in BloomFilter hashes arr'
 
+-- search for an element in a Bloom filter
 search :: a -> BloomFilter a -> Bool
 search x (BloomFilter hashes arr) = all id [arr ! i | i <- (hashes <*> pure x)]
 
+-- Parsing routine
+-- type for representing arbitrary command
 data Command = Set Int Double | Add Word64 | Search Word64 | Print | ErrorCommand
 
 main :: IO ()
