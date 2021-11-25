@@ -20,7 +20,7 @@ sieve (x:xs) = let multof x n = n `rem` x == 0
 
 -- 31st Mersenne number
 mersenne31 :: Int
-mersenne31 = (2 `shiftL` 31) - 1
+mersenne31 = (1 `shiftL` 31) - 1
 
 -- Bloom filter
 data BloomFilter a = BloomFilter [a -> Int] (UArray Int Bool)
