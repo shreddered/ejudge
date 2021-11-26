@@ -2,11 +2,14 @@ module Main where
 
 import Control.Applicative
 import Control.Arrow
+import Control.Monad (unless)
 
 import Data.Array.Unboxed (UArray, (//), (!), array, indices)
 import Data.Bits (Bits, shiftL)
 import Data.Bool (bool)
 import Data.Word
+
+import System.IO (isEOF)
 
 -- list of prime numbers
 primes :: Integral a => [a]
@@ -48,11 +51,22 @@ insert x (BloomFilter hashes arr) =
 search :: a -> BloomFilter a -> Bool
 search x (BloomFilter hashes arr) = all id [arr ! i | i <- (hashes <*> pure x)]
 
+main :: IO ()
+main = processLineByLine Nothing
+
 -- Parsing routine
 data Command = Set Word64 Double | Add Word64 | Search Word64 | Print | ErrorCommand
 
-main :: IO ()
-main = interact (unlines . execute . map toCommand . filter (not . null) . lines)
+processLineByLine :: Maybe (BloomFilter Word64) -> IO ()
+processLineByLine bf = do
+  done <- isEOF
+  unless done $ do
+    line <- getLine
+    let cmd = toCommand line
+        (output, bf') = execute cmd bf
+    unless (null output) (putStrLn output)
+    processLineByLine bf'
+
 
 toCommand :: String -> Command
 toCommand str = let (cmd:args) = words str
@@ -66,30 +80,25 @@ toCommand str = let (cmd:args) = words str
                       "print"  -> Print
                       _        -> ErrorCommand
 
-isValidSet :: Command -> Bool
-isValidSet (Set n p) = p /= 0
-                       && round (-fromIntegral(n) * (logBase 2 p) / log 2) /= 0
-                       && round (-(logBase 2 p)) /= 0
-isValidSet _         = False
+execute :: Command -> Maybe (BloomFilter Word64) -> (String, Maybe (BloomFilter Word64))
+execute cmd Nothing   = case paramsFromSet cmd of
+                          (Just (m, k)) -> ( (show m) ++ " " ++ (show k)
+                                           , Just (bloomFilter m (mkHashes m k))
+                                           )
+                          Nothing -> ("error", Nothing)
+execute cmd (Just bf) = case cmd of
+                          (Set _ _)    -> ("error", Just bf)
+                          ErrorCommand -> ("error", Just bf)
+                          (Add k)      -> ("", Just (insert k bf))
+                          (Search k)   -> ( bool "0" "1" (search k bf)
+                                          , Just bf
+                                          )
+                          Print        -> (show bf, Just bf)
 
-execute :: [Command] -> [String]
-execute [] = []
-execute xs = let tmp = span (not . isValidSet) xs
-                 (err, output) = map (\_ -> "error") *** executeHelper $ tmp
-              in err ++ output
-
-executeHelper :: [Command] -> [String]
-executeHelper []             = []
-executeHelper ((Set n p):xs) = reverse (fst (foldl foo ([s], bf_) xs))
-  where
-    m = round (-fromIntegral(n) * (logBase 2 p) / log 2)
-    k = round ( - (logBase 2 p) )
-    s = (show m) ++ " " ++ (show k)
-    bf_ = bloomFilter m (mkHashes m k)
-
-foo :: ([String], BloomFilter Word64) -> Command -> ([String], BloomFilter Word64)
-foo (output, bf) (Set _ _)      = ("error" : output, bf)
-foo (output, bf) (Add k)        = (output, insert k bf)
-foo (output, bf) (Search k)     = ((bool "0" "1" (search k bf)) : output, bf)
-foo (output, bf) (Print)        = ((show bf) : output, bf)
-foo (output, bf) (ErrorCommand) = ("error" : output, bf)
+paramsFromSet :: Command -> Maybe (Word64, Word64)
+paramsFromSet (Set n p) = let m = round (-fromIntegral(n) * (logBase 2 p) / log 2)
+                              k = round (-(logBase 2 p))
+                           in if p /= 0 && m /= 0 && k /= 0
+                                 then Just (m, k)
+                                 else Nothing
+paramsFromSet _         = Nothing
