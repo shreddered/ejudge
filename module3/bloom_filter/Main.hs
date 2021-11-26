@@ -21,15 +21,19 @@ sieve (x:xs) = let multof x n = n `rem` x == 0
 mersenne31 :: (Num a, Bits a) => a
 mersenne31 = (1 `shiftL` 31) - 1
 
+mkHashes :: Word64 -> Word64 -> [Word64 -> Word64]
+mkHashes m k = let hash i p = \x -> ((i * x + p) `mod` mersenne31) `mod` m
+                in zipWith hash [1..k] (primes)
+
 -- Bloom filter
-data BloomFilter a = BloomFilter [a -> Int] (UArray Int Bool)
+data BloomFilter a = BloomFilter [a -> Word64] (UArray Word64 Bool)
 
 instance Show (BloomFilter a) where
   show (BloomFilter _ arr) = [bool '0' '1' (arr ! i) | i <- indices arr]
 
 -- create Bloom filter
-bloomFilter :: Int                       -- size of bit vector
-            -> [a -> Int]                -- hash functions
+bloomFilter :: Word64                       -- size of bit vector
+            -> [a -> Word64]                -- hash functions
             -> BloomFilter a
 bloomFilter m hashes = let arr = array (0, m - 1) [(i, False) | i <- [0..m - 1]]
                         in BloomFilter hashes arr
