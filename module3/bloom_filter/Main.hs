@@ -1,6 +1,7 @@
 module Main where
 
 import Control.Applicative
+import Control.Arrow
 
 import Data.Array.Unboxed (UArray, (//), (!), array, indices)
 import Data.Bits (Bits, shiftL)
@@ -44,26 +45,45 @@ search :: a -> BloomFilter a -> Bool
 search x (BloomFilter hashes arr) = all id [arr ! i | i <- (hashes <*> pure x)]
 
 -- Parsing routine
--- type for representing arbitrary command
-data Command = Set Int Double | Add Word64 | Search Word64 | Print | ErrorCommand
+data Command = Set Word64 Double | Add Word64 | Search Word64 | Print | ErrorCommand
 
 main :: IO ()
 main = interact (unlines . execute . map toCommand . filter (not . null) . lines)
 
--- parse command from string
 toCommand :: String -> Command
-toCommand s = let (command:args) = words s
-                  n = read (args !! 0)
-                  p = read (args !! 1)
-                  k = read (args !! 0)
-                  in case command of
-                       "set"    -> Set n p
-                       "add"    -> Add k
-                       "search" -> Search k
-                       "print"  -> Print
-                       _        -> ErrorCommand
+toCommand str = let (cmd:args) = words str
+                    n = read (args !! 0)
+                    p = read (args !! 1)
+                    k = read (args !! 0)
+                 in case cmd of
+                      "set"    -> Set n p
+                      "add"    -> Add k
+                      "search" -> Search k
+                      "print"  -> Print
+                      _        -> ErrorCommand
 
--- TODO: implement logic
+isValidSet :: Command -> Bool
+isValidSet (Set n p) = p /= 0 && round (-fromIntegral(n) * (logBase 2 p) / log 2) /= 0
+isValidSet _         = False
+
 execute :: [Command] -> [String]
 execute [] = []
-execute xs = undefined
+execute xs = let tmp = span (not . isValidSet) xs
+                 (err, output) = map (\_ -> "error") *** executeHelper $ tmp
+              in err ++ output
+
+executeHelper :: [Command] -> [String]
+executeHelper []             = []
+executeHelper ((Set n p):xs) = reverse (fst (foldl foo ([s], bf_) xs))
+  where
+    m = round (-fromIntegral(n) * (logBase 2 p) / log 2)
+    k = round ( - (logBase 2 p) )
+    s = (show m) ++ " " ++ (show k)
+    bf_ = bloomFilter m (mkHashes m k)
+
+foo :: ([String], BloomFilter Word64) -> Command -> ([String], BloomFilter Word64)
+foo (output, bf) (Set _ _)  = ("error" : output, bf)
+foo (output, bf) (Add k)    = (output, insert k bf)
+foo (output, bf) (Search k) = ((bool "0" "1" (search k bf)) : output, bf)
+foo (output, bf) (Print)    = ((show bf) : output, bf)
+foo (output, bf) (ErrorCommand) = ("error" : output, bf)
