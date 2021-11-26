@@ -67,7 +67,9 @@ toCommand str = let (cmd:args) = words str
                       _        -> ErrorCommand
 
 isValidSet :: Command -> Bool
-isValidSet (Set n p) = p /= 0 && round (-fromIntegral(n) * (logBase 2 p) / log 2) /= 0
+isValidSet (Set n p) = p /= 0
+                       && round (-fromIntegral(n) * (logBase 2 p) / log 2) /= 0
+                       && round (-(logBase 2 p)) /= 0
 isValidSet _         = False
 
 execute :: [Command] -> [String]
