@@ -24,40 +24,41 @@ sieve (x:xs) = let multof x n = n `rem` x == 0
 mersenne31 :: (Num a, Bits a) => a
 mersenne31 = (1 `shiftL` 31) - 1
 
-mkHashes :: Word64 -> Word64 -> [Word64 -> Word64]
+mkHashes :: Integer -> Integer -> [Integer -> Integer]
 mkHashes m k = let hash i p = \x -> ((i * x + p) `mod` mersenne31) `mod` m
                 in zipWith hash [1..k] (primes)
 
 -- Bloom filter
-data BloomFilter a = BloomFilter [a -> Word64] (UArray Word64 Bool)
+data BloomFilter a b = BloomFilter [a -> b] (UArray b Bool)
 
-instance Show (BloomFilter a) where
+instance (Ix b) => Show (BloomFilter a b) where
   show (BloomFilter _ arr) = [bool '0' '1' (arr ! i) | i <- indices arr]
 
 -- create Bloom filter
-bloomFilter :: Word64                       -- size of bit vector
-            -> [a -> Word64]                -- hash functions
-            -> BloomFilter a
+bloomFilter :: (Integral b, Ix b)
+            => b                            -- size of a bit vector
+            -> [a -> b]                -- hash functions
+            -> BloomFilter a b
 bloomFilter m hashes = let arr = array (0, m - 1) [(i, False) | i <- [0..m - 1]]
                         in BloomFilter hashes arr
 
 -- insert element in a Bloom filter
-insert :: a -> BloomFilter a -> BloomFilter a
+insert :: (Integral b, Ix b) => a -> BloomFilter a b -> BloomFilter a b
 insert x (BloomFilter hashes arr) =
   let arr' = arr // [(i, True) | i <- (hashes <*> pure x)]
    in BloomFilter hashes arr'
 
 -- search for an element in a Bloom filter
-search :: a -> BloomFilter a -> Bool
+search :: (Integral b, Ix b) => a -> BloomFilter a b -> Bool
 search x (BloomFilter hashes arr) = all id [arr ! i | i <- (hashes <*> pure x)]
 
 main :: IO ()
 main = processLineByLine Nothing
 
 -- Parsing routine
-data Command = Set Word64 Double | Add Word64 | Search Word64 | Print | ErrorCommand
+data Command = Set Integer Double | Add Integer | Search Integer | Print | ErrorCommand
 
-processLineByLine :: Maybe (BloomFilter Word64) -> IO ()
+processLineByLine :: Maybe (BloomFilter Integer Integer) -> IO ()
 processLineByLine bf = do
   done <- isEOF
   unless done $ do
@@ -83,7 +84,9 @@ toCommand str = let (cmd:args) = words str
                       "print"  -> Print
                       _        -> ErrorCommand
 
-execute :: Command -> Maybe (BloomFilter Word64) -> (String, Maybe (BloomFilter Word64))
+execute :: Command
+        -> Maybe (BloomFilter Integer Integer)
+        -> (String, Maybe (BloomFilter Integer Integer))
 execute cmd Nothing   = case paramsFromSet cmd of
                           (Just (m, k)) -> ( (show m) ++ " " ++ (show k)
                                            , Just (bloomFilter m (mkHashes m k))
@@ -98,7 +101,7 @@ execute cmd (Just bf) = case cmd of
                                           )
                           Print        -> (show bf, Just bf)
 
-paramsFromSet :: Command -> Maybe (Word64, Word64)
+paramsFromSet :: Command -> Maybe (Integer, Integer)
 paramsFromSet (Set n p) = let m = round (-fromIntegral(n) * (logBase 2 p) / log 2)
                               k = round (-(logBase 2 p))
                            in if p /= 0 && m /= 0 && k /= 0
