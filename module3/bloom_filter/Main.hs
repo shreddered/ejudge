@@ -4,7 +4,7 @@ import Control.Applicative
 import Control.Arrow
 import Control.Monad (unless)
 
-import Data.Array.Unboxed (UArray, (//), (!), array, indices)
+import Data.Array.Unboxed
 import Data.Bits (Bits, shiftL)
 import Data.Bool (bool)
 import Data.Word
