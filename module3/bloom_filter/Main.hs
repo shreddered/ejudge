@@ -62,10 +62,13 @@ processLineByLine bf = do
   done <- isEOF
   unless done $ do
     line <- getLine
-    let cmd = toCommand line
-        (output, bf') = execute cmd bf
-    unless (null output) (putStrLn output)
-    processLineByLine bf'
+    if (null line)
+       then processLineByLine bf
+       else do
+         let cmd = toCommand line
+             (output, bf') = execute cmd bf
+         unless (null output) (putStrLn output)
+         processLineByLine bf'
 
 
 toCommand :: String -> Command
