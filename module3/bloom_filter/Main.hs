@@ -10,7 +10,7 @@ import Data.Word
 
 import System.IO (isEOF)
 
--- list of prime numbers
+-- list of prime numbers (evaluated lazily)
 primes :: Integral a => [a]
 primes = sieve [2..]
 
@@ -19,15 +19,17 @@ sieve :: Integral a => [a] -> [a]
 sieve (x:xs) = let multof x n = n `rem` x == 0
                 in x : (sieve (filter (not . multof x) xs))
 
--- 31st Mersenne number
+-- 31st Mersenne number (2^31 - 1)
 mersenne31 :: (Num a, Bits a) => a
 mersenne31 = (1 `shiftL` 31) - 1
 
+-- generate hash functions
 mkHashes :: Integer -> Integer -> [Integer -> Integer]
 mkHashes m k = let hash i p = \x -> ((i * x + p) `mod` mersenne31) `mod` m
                 in zipWith hash [1..k] (primes)
 
 -- Bloom filter
+-- Unboxed `Bool` arrays in `array` package use memory efficient implementation
 data BloomFilter a b = BloomFilter [a -> b] (UArray b Bool)
 
 instance (Ix b) => Show (BloomFilter a b) where
@@ -35,13 +37,13 @@ instance (Ix b) => Show (BloomFilter a b) where
 
 -- create Bloom filter
 bloomFilter :: (Integral b, Ix b)
-            => b                            -- size of a bit vector
+            => b                       -- size of a bit vector
             -> [a -> b]                -- hash functions
             -> BloomFilter a b
 bloomFilter m hashes = let arr = array (0, m - 1) [(i, False) | i <- [0..m - 1]]
                         in BloomFilter hashes arr
 
--- insert element in a Bloom filter
+-- insert element into a Bloom filter
 insert :: (Integral b, Ix b) => a -> BloomFilter a b -> BloomFilter a b
 insert x (BloomFilter hashes arr) =
   let arr' = arr // [(i, True) | i <- (hashes <*> pure x)]
@@ -55,15 +57,17 @@ main :: IO ()
 main = processLineByLine Nothing
 
 -- Parsing routine
+-- data type for command: set n p; add k; search k; print
 data Command = Set Integer Double | Add Integer | Search Integer | Print | ErrorCommand
 
+-- main loop of a program
 processLineByLine :: Maybe (BloomFilter Integer Integer) -> IO ()
 processLineByLine bf = do
   done <- isEOF
   unless done $ do
     line <- getLine
     if (null line)
-       then processLineByLine bf
+       then processLineByLine bf -- skip empty line
        else do
          let cmd = toCommand line
              (output, bf') = execute cmd bf
