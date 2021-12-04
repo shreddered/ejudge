@@ -106,7 +106,7 @@ execute cmd (Just bf) = case cmd of
 paramsFromSet :: Command -> Maybe (Integer, Integer)
 paramsFromSet (Set n p) = let m = round (-fromIntegral(n) * (logBase 2 p) / log 2)
                               k = round (-(logBase 2 p))
-                           in if p > 0 && p < 1 && m /= 0 && k /= 0
+                           in if p > 0 && p < 1 && n > 0 && m /= 0 && k /= 0
                                  then Just (m, k)
                                  else Nothing
 paramsFromSet _         = Nothing
