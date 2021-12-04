@@ -1,7 +1,6 @@
 module Main where
 
 import Control.Applicative
-import Control.Arrow
 import Control.Monad (unless)
 
 import Data.Array.Unboxed
