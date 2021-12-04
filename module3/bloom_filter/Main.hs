@@ -71,7 +71,6 @@ processLineByLine bf = do
          unless (null output) (putStrLn output)
          processLineByLine bf'
 
-
 toCommand :: String -> Command
 toCommand str = let (cmd:args) = words str
                     n = read (args !! 0)
