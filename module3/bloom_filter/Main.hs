@@ -6,7 +6,6 @@ import Control.Monad (unless)
 import Data.Array.Unboxed
 import Data.Bits (Bits, shiftL)
 import Data.Bool (bool)
-import Data.Word
 
 import System.IO (isEOF)
 
